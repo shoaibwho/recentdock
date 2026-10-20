@@ -19,10 +19,18 @@ export const SECTION_IDS = Object.freeze([
 export const DEFAULT_ORDER = SECTION_IDS;
 
 export const SECTION_TITLES = Object.freeze({
-    'downloaded-folders': 'Recently Downloaded Folders',
-    'downloaded-files': 'Recently Downloaded Files',
-    'opened-files': 'Recently Opened Files',
-    'opened-folders': 'Recently Opened Folders',
+    'downloaded-folders': 'Recent Download Locations',
+    'downloaded-files': 'Recent Downloads',
+    'opened-files': 'Recent Files',
+    'opened-folders': 'Recent Folders',
+});
+
+// Shown under a heading when its "?" is clicked or the heading is hovered.
+export const SECTION_DESCRIPTIONS = Object.freeze({
+    'downloaded-folders': 'Folders your downloads were saved into (Downloads, Documents…)',
+    'downloaded-files': 'Files you downloaded',
+    'opened-files': 'Files you opened',
+    'opened-folders': 'Folders you opened',
 });
 
 // Which sections hold folders (opened with the file manager) vs. files.

@@ -3,7 +3,7 @@
 
 import GLib from 'gi://GLib';
 
-import {SECTION_IS_FOLDER, SECTION_TITLES, SORT_NEWEST} from './config.js';
+import {SECTION_DESCRIPTIONS, SECTION_IS_FOLDER, SECTION_TITLES, SORT_NEWEST} from './config.js';
 import {dedupe, selectForDisplay} from './history.js';
 import {validateWebUrl} from './paths.js';
 
@@ -15,9 +15,12 @@ import {validateWebUrl} from './paths.js';
  */
 export function sectionCandidates(id, {store, recent}) {
     switch (id) {
-    case 'downloaded-folders':
     case 'downloaded-files':
-        return store.get(id);
+        return dedupe([...store.get(id), ...recent?.downloads ?? []]);
+    case 'downloaded-folders':
+        // The folder each downloaded file was saved into, wherever that is.
+        return dedupe(sectionCandidates('downloaded-files', {store, recent})
+            .map(e => ({...e, path: GLib.path_get_dirname(e.path)})));
     case 'opened-files':
         return recent?.files ?? [];
     case 'opened-folders':
@@ -46,7 +49,7 @@ export function buildMenuModel(config, sources, isAvailable) {
         const entries = selectForDisplay(sectionCandidates(id, sources), sc,
             e => isAvailable(e.path, SECTION_IS_FOLDER[id]));
         if (entries.length)
-            out.push({id, title: SECTION_TITLES[id], isFolder: SECTION_IS_FOLDER[id], entries});
+            out.push({id, title: SECTION_TITLES[id], description: SECTION_DESCRIPTIONS[id], isFolder: SECTION_IS_FOLDER[id], entries});
     }
     return out;
 }

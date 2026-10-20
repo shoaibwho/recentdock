@@ -127,8 +127,7 @@ export class DownloadsTracker {
     }
 
     _known(path) {
-        return ['downloaded-files', 'downloaded-folders'].some(id =>
-            this._store.get(id).some(e => e.path === path));
+        return this._store.get('downloaded-files').some(e => e.path === path);
     }
 
     /**
@@ -148,10 +147,6 @@ export class DownloadsTracker {
         }
         const ftype = info.get_file_type();
         const path = file.get_path();
-        if (ftype === Gio.FileType.DIRECTORY) {
-            this._store.add('downloaded-folders', {path, time: Date.now(), source: 'downloads-monitor'});
-            return;
-        }
         if (ftype !== Gio.FileType.REGULAR)
             return;
         if (justCreated || this._hasInProgressSibling(name)) {
@@ -186,7 +181,7 @@ export class DownloadsTracker {
                 } catch {
                     return;
                 }
-                const found = {files: [], folders: []};
+                const files = [];
                 const next = () => en.next_files_async(64, GLib.PRIORITY_LOW, this._cancellable, (_e, r) => {
                     let infos;
                     try {
@@ -196,7 +191,7 @@ export class DownloadsTracker {
                     }
                     if (infos.length === 0) {
                         en.close_async(GLib.PRIORITY_LOW, null, null);
-                        this._finishCatchUp(found, since, startedAt);
+                        this._finishCatchUp(files, since, startedAt);
                         return;
                     }
                     for (const info of infos) {
@@ -206,10 +201,8 @@ export class DownloadsTracker {
                         const time = info.get_modification_date_time()?.to_unix_usec() / 1000 || 0;
                         const t = info.get_file_type();
                         const entry = {path: GLib.build_filenamev([this._dirPath, name]), time, source: 'downloads-scan'};
-                        if (t === Gio.FileType.DIRECTORY)
-                            found.folders.push(entry);
-                        else if (t === Gio.FileType.REGULAR && !this._hasInProgressSibling(name))
-                            found.files.push(entry);
+                        if (t === Gio.FileType.REGULAR && !this._hasInProgressSibling(name))
+                            files.push(entry);
                     }
                     next();
                 });
@@ -217,18 +210,17 @@ export class DownloadsTracker {
             });
     }
 
-    _finishCatchUp(found, since, startedAt) {
+    _finishCatchUp(files, since, startedAt) {
         const firstRun = since === 0;
-        for (const [list, id] of [[found.files, 'downloaded-files'], [found.folders, 'downloaded-folders']]) {
-            const fresh = list
-                .filter(e => firstRun || (e.time > since && e.time <= startedAt))
-                .sort((a, b) => b.time - a.time)
-                .slice(0, firstRun ? 5 : 25);
-            const known = new Set(this._store.get(id).map(e => e.path));
-            const add = fresh.filter(e => !known.has(e.path));
-            if (add.length)
-                this._store.set(id, [...add, ...this._store.get(id)]);
-        }
+        const id = 'downloaded-files';
+        const fresh = files
+            .filter(e => firstRun || (e.time > since && e.time <= startedAt))
+            .sort((a, b) => b.time - a.time)
+            .slice(0, firstRun ? 5 : 25);
+        const known = new Set(this._store.get(id).map(e => e.path));
+        const add = fresh.filter(e => !known.has(e.path));
+        if (add.length)
+            this._store.set(id, [...add, ...this._store.get(id)]);
         this._store.markScanned(startedAt);
     }
 }

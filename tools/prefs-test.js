@@ -74,7 +74,7 @@ app.connect('activate', () => {
     spin(300);
     const rows = () => [...walk(layout)].filter(w => w instanceof Adw.ActionRow && w.subtitle.startsWith('Position'));
     check('layout rows in default order', JSON.stringify(rows().map(r => r.title)) === JSON.stringify(
-        ['Recently Downloaded Folders', 'Recently Downloaded Files', 'Recently Opened Files', 'Recently Opened Folders']));
+        ['Recent Download Locations', 'Recent Downloads', 'Recent Files', 'Recent Folders']));
     check('drag handles shown', rows().every(r => [...walk(r)].some(w => w instanceof Gtk.Image && w.icon_name === 'list-drag-handle-symbolic')));
 
     const controllers = (row, type) => {
@@ -87,7 +87,7 @@ app.connect('activate', () => {
         }
         return out;
     };
-    // Drag "Recently Opened Folders" (last) and drop on the top half of the first row.
+    // Drag "Recent Folders" (last) and drop on the top half of the first row.
     const src = rows()[3];
     const content = controllers(src, Gtk.DragSource)[0].emit('prepare', 5, 5);
     check('drag source offers a string payload', content?.ref_formats().contain_gtype(GObject.TYPE_STRING));
@@ -98,7 +98,7 @@ app.connect('activate', () => {
     check('drop handler accepted the section', accepted === true);
     check('drag-and-drop updates order setting', JSON.stringify(settings.get_strv('section-order')) === JSON.stringify(
         ['opened-folders', 'downloaded-folders', 'downloaded-files', 'opened-files']), settings.get_strv('section-order'));
-    check('list rebuilt in new order', rows()[0].title === 'Recently Opened Folders');
+    check('list rebuilt in new order', rows()[0].title === 'Recent Folders');
 
     // Drop on the bottom half of the last row moves it to the end.
     const v2 = 'opened-folders';

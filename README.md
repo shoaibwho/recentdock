@@ -8,15 +8,15 @@ Ubuntu dock:
 
 ```
 RecentDock Settings            ← always first
-── Recently Downloaded Folders
-   Album
-   Extracted
-── Recently Downloaded Files
+── Recent Download Locations
+   Downloads
+   Documents
+── Recent Downloads
    report.pdf
    photo.png
-── Recently Opened Files
+── Recent Files
    notes.txt
-── Recently Opened Folders
+── Recent Folders
    Projects
 ── (the dock's own items: Unpin, App Details…)
 ```
@@ -101,8 +101,8 @@ reliable sources below and says plainly what they miss. See
 
 | Section | Source | Not covered |
 |---|---|---|
-| Downloaded Files | Watching your **Downloads** folder (inotify via GIO). Recognises Chrome/Chromium/Brave/Edge `.crdownload` and Firefox `.part` temporary files, so unfinished downloads never appear. Files written directly (wget, curl, copies) are recorded when the writer closes them. | Downloads saved to other folders. Downloads made while you were logged out are picked up at next login from the folder's contents. |
-| Downloaded Folders | Folders that appear directly in Downloads: "Extract Here", `unzip`, or a folder moved there. | Folders extracted outside Downloads. Files that "Extract Here" puts directly into Downloads count as files. A folder you create by hand in Downloads also counts. |
+| Downloaded Files | Watching your **Downloads** folder (inotify via GIO). Recognises Chrome/Chromium/Brave/Edge `.crdownload` and Firefox `.part` temporary files, so unfinished downloads never appear. Files written directly (wget, curl, copies) are recorded when the writer closes them. Downloads a browser saves to **any other folder** are picked up from the recent-files list, where browsers register them. | Non-browser downloads saved outside Downloads. Downloads made while you were logged out are picked up at next login from the folder's contents. |
+| Downloaded Folders | The folder each recent download was saved into (e.g. `~/Documents` if you saved an image there), newest first. | Same as Downloaded Files. |
 | Opened Files | The desktop's recent-files list (`~/.local/share/recently-used.xbel`), which GNOME/GTK apps, LibreOffice, file choosers and many other apps write to. Read only. | Apps that don't register recent files (many terminal, some Electron/Qt apps). |
 | Opened Folders | Folders you visit in **Files (Nautilus)**, through its standard `org.freedesktop.FileManager1` D-Bus interface; folders opened via RecentDock; folders in the recent-files list (e.g. chosen in an "Open Folder" dialog). | Other file managers, terminals (`cd`), and IDE-internal navigation. Visits are recorded only while you are logged in. |
 

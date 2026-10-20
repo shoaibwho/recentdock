@@ -232,9 +232,8 @@ test('downloads monitor: Chrome, Firefox, wget, folders, extraction', () => {
     spin(1500);
 
     const files = store.get('downloaded-files').map(e => GLib.path_get_basename(e.path)).sort();
-    const folders = store.get('downloaded-folders').map(e => GLib.path_get_basename(e.path)).sort();
     assertEqual(files, ['archive.zip', 'photo.png', 'report.pdf']);
-    assertEqual(folders, ['Album', 'Extracted']);
+    assertEqual(store.get('downloaded-folders'), [], 'sub-folders are not downloads');
 
     // Rename of a tracked file keeps its history under the new name.
     GLib.rename(`${dir}/report.pdf`, `${dir}/report-renamed.pdf`);
@@ -256,7 +255,7 @@ test('downloads catch-up picks up items added while not running', () => {
     t.start();
     spin(400);
     assertEqual(store.get('downloaded-files').map(e => GLib.path_get_basename(e.path)), ['offline.iso']);
-    assertEqual(store.get('downloaded-folders').map(e => GLib.path_get_basename(e.path)), ['OfflineFolder']);
+    assertEqual(store.get('downloaded-folders'), []);
     t.stop();
     rmrf(dir);
 });
@@ -275,6 +274,17 @@ test('recent-files parsing separates files and folders, skips screenshots and re
     assertEqual(r.folders.map(e => e.path), ['/home/test/Projects']);
     const withShots = parseRecent(bytes, {excludeScreenshots: false});
     assertEqual(withShots.files[0].path, '/home/test/Pictures/Screenshots/Screenshot.png');
+});
+
+test('recent-files parsing picks up browser downloads saved anywhere', () => {
+    const entry = (path, app) => `<bookmark href="file://${path}" added="2026-02-01T10:00:00Z" ` +
+        'modified="2026-02-02T10:00:00Z" visited="2026-02-02T10:00:00Z"><info><metadata owner="http://freedesktop.org">' +
+        `<bookmark:applications><bookmark:application name="${app}" exec="x" modified="2026-02-02T10:00:00Z" count="1"/>` +
+        '</bookmark:applications></metadata></info></bookmark>';
+    const r = parseRecent('<?xml version="1.0"?><xbel version="1.0" xmlns:bookmark="http://www.freedesktop.org/standards/desktop-bookmarks">' +
+        `${entry('/home/u/Documents/pic.png', 'com.google.Chrome')}${entry('/home/u/b.txt', 'gnome-text-editor')}</xbel>`);
+    assertEqual(r.downloads.map(e => e.path), ['/home/u/Documents/pic.png']);
+    assertEqual(r.downloads[0].time, Date.UTC(2026, 1, 1, 10), 'download time is when it was added');
 });
 
 test('recent-files parsing rejects corrupted data', () => {
@@ -296,8 +306,7 @@ test('file manager locations: only local folders', () => {
 function sources() {
     const store = memStore();
     for (let i = 1; i <= 6; i++) {
-        store.add('downloaded-files', {path: `/dl/file${i}`, time: i * 10});
-        store.add('downloaded-folders', {path: `/dl/folder${i}`, time: i * 10});
+        store.add('downloaded-files', {path: `/dl/folder${i}/file${i}`, time: i * 10});
     }
     store.add('opened-folders', {path: '/home/u/Visited', time: 100});
     return {store, recent: {
@@ -326,6 +335,15 @@ test('menu: order, visibility, limit and sort follow settings independently', ()
     s.set_boolean('opened-folders-enabled', true);
     const again = buildMenuModel(C.readConfig(s), sources(), always);
     assert(again.some(x => x.id === 'opened-folders'), 're-enabled section restores its history');
+});
+
+test('menu: downloaded folders are where downloaded files were saved', () => {
+    const store = memStore();
+    store.add('downloaded-files', {path: '/home/u/Downloads/a.zip', time: 10});
+    store.add('downloaded-files', {path: '/home/u/Downloads/b.zip', time: 20});
+    const recent = {files: [], folders: [], downloads: [{path: '/home/u/Documents/pic.png', time: 30}]};
+    const m = buildMenuModel(C.readConfig(newSettings()), {store, recent}, always);
+    assertEqual(m[0].entries.map(e => e.path), ['/home/u/Documents', '/home/u/Downloads']);
 });
 
 test('menu: empty, missing and disabled', () => {
@@ -359,7 +377,7 @@ test('left-click resolves every action and fails gracefully', () => {
     const s = newSettings();
     const src = sources();
     const res = () => resolveLeftClick(C.readConfig(s), src, always);
-    assertEqual(res(), {kind: 'show-item', target: '/dl/file6'});
+    assertEqual(res(), {kind: 'show-item', target: '/dl/folder6/file6'});
     s.set_string('left-click-action', 'downloaded-folder');
     assertEqual(res(), {kind: 'open-folder', target: '/dl/folder6'});
     s.set_string('left-click-action', 'visited-folder');

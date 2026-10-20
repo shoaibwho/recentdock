@@ -14,6 +14,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
@@ -164,7 +165,7 @@ export default class RecentDockExtension extends Extension {
 
         const model = buildMenuModel(this._config, this._sources(), this._availability());
         for (const section of model) {
-            add(new PopupMenu.PopupSeparatorMenuItem(section.title));
+            this._addHeading(add, section);
             const names = section.entries.map(e => displayName(e.path));
             section.entries.forEach((entry, i) => {
                 let label = names[i];
@@ -192,6 +193,55 @@ export default class RecentDockExtension extends Extension {
 
         this._ourItems.set(menu, items);
         this._recordTiming('menu', (GLib.get_monotonic_time() - t0) / 1000);
+    }
+
+    /**
+     * A section heading with a faded "?" at its end. Clicking the "?", or
+     * hovering the heading for 3 seconds, shows what the section lists.
+     */
+    _addHeading(add, section) {
+        const heading = add(new PopupMenu.PopupSeparatorMenuItem(section.title));
+        // Only the title text reacts; a reactive row would close the menu on click.
+        heading.label.reactive = true;
+        heading.label.track_hover = true;
+        const help = new St.Button({
+            label: '?',
+            opacity: 128,
+            reactive: true,
+            can_focus: true,
+            accessible_name: `What is ${section.title}?`,
+            style: 'padding: 0 4px; font-weight: bold;',
+        });
+        heading.insert_child_above(help, heading.label);
+
+        const info = add(new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false}));
+        const text = new St.Label({text: section.description, opacity: 180, style: 'font-size: 0.9em;'});
+        info.add_child(text);
+        info.hide();
+
+        let pinned = false, timerId = 0;
+        const stopTimer = () => {
+            if (timerId)
+                GLib.source_remove(timerId);
+            timerId = 0;
+        };
+        help.connect('clicked', () => {
+            pinned = !info.visible;
+            info.visible = pinned;
+        });
+        heading.label.connect('notify::hover', () => {
+            stopTimer();
+            if (heading.label.hover) {
+                timerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 3000, () => {
+                    timerId = 0;
+                    info.show();
+                    return GLib.SOURCE_REMOVE;
+                });
+            } else if (!pinned) {
+                info.hide();
+            }
+        });
+        heading.connect('destroy', stopTimer);
     }
 
     _openEntry(section, entry) {

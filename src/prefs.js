@@ -22,12 +22,11 @@ import {defaultRecentPath} from './lib/recentFiles.js';
 import {defaultStorePath} from './lib/history.js';
 
 const SOURCE_INFO = {
-    'downloaded-folders': 'Folders that appear directly in your Downloads folder — for example a ' +
-        'folder created by “Extract Here”, by unzip, or moved there. Folders extracted elsewhere ' +
-        'are not detected.',
-    'downloaded-files': 'Files completed in your Downloads folder. Recognises Chrome, Chromium, ' +
-        'Brave, Edge and Firefox temporary files (.crdownload, .part), and files written ' +
-        'directly by tools such as wget. Downloads saved to other folders are not detected.',
+    'downloaded-folders': 'The folders your recent downloads were saved into — for example ' +
+        'Documents, if you saved an image there from the browser.',
+    'downloaded-files': 'Files completed in your Downloads folder (Chrome, Chromium, Brave, Edge, ' +
+        'Firefox, wget…), plus downloads a browser saved to any other folder and registered in ' +
+        'your desktop’s recent-files list.',
     'opened-files': 'Your desktop’s recent-files list (recently-used.xbel), written by GTK and ' +
         'GNOME apps, LibreOffice, file choosers and many others. Apps that do not register ' +
         'recent files (some Electron, Qt or terminal apps) are not covered.',

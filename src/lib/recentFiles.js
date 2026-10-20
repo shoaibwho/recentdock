@@ -9,6 +9,15 @@ import Gio from 'gi://Gio';
 // Applications whose entries do not mean "the user opened this":
 //   gnome-shell adds every screenshot it saves.
 const SCREENSHOT_APPS = ['gnome-shell'];
+// Browsers register each finished download here, wherever it was saved
+// (e.g. Chrome as "com.google.Chrome", Firefox as "Firefox"). File uploads go
+// through the portal and are registered by it, not by the browser.
+const BROWSER_APP_RE = /chrom|firefox|brave|edge|vivaldi|opera|epiphany|librewolf|waterfox|floorp|zen/i;
+
+/** True if an xbel application name belongs to a web browser. */
+export function isBrowserApp(name) {
+    return BROWSER_APP_RE.test(name);
+}
 
 export function defaultRecentPath() {
     return GLib.build_filenamev([GLib.get_user_data_dir(), 'recently-used.xbel']);
@@ -19,8 +28,9 @@ function toMs(dt) {
 }
 
 /**
- * Parse xbel text into {files, folders} lists of entries, newest first.
- * Only local file:// entries are returned.
+ * Parse xbel text into {files, folders, downloads} lists of entries, newest
+ * first. Only local file:// entries are returned. `downloads` holds the files
+ * a web browser registered, with the time they were first added.
  *
  * @param {string|Uint8Array} data
  * @param {{excludeScreenshots?: boolean}} opts
@@ -28,7 +38,7 @@ function toMs(dt) {
 export function parseRecent(data, {excludeScreenshots = true} = {}) {
     const bf = new GLib.BookmarkFile();
     bf.load_from_data(typeof data === 'string' ? new TextEncoder().encode(data) : data);
-    const files = [], folders = [];
+    const files = [], folders = [], downloads = [];
     for (const uri of bf.get_uris()) {
         if (!uri.startsWith('file://'))
             continue;
@@ -60,9 +70,16 @@ export function parseRecent(data, {excludeScreenshots = true} = {}) {
             continue;
         const entry = {path, time, source: 'recently-used.xbel'};
         (mime === 'inode/directory' ? folders : files).push(entry);
+        if (mime !== 'inode/directory' && apps.some(isBrowserApp)) {
+            let added = 0;
+            try {
+                added = toMs(bf.get_added_date_time(uri));
+            } catch {}
+            downloads.push({path, time: added || time, source: 'recently-used.xbel (browser)'});
+        }
     }
     const byTime = (a, b) => b.time - a.time;
-    return {files: files.sort(byTime), folders: folders.sort(byTime)};
+    return {files: files.sort(byTime), folders: folders.sort(byTime), downloads: downloads.sort(byTime)};
 }
 
 /**
@@ -77,6 +94,7 @@ export class RecentFilesSource {
         this._listeners = new Set();
         this.files = [];
         this.folders = [];
+        this.downloads = [];
         this.status = 'not started';
         this.lastParseMs = 0;
         this.excludeScreenshots = true;
@@ -119,6 +137,7 @@ export class RecentFilesSource {
                     return;
                 this.files = [];
                 this.folders = [];
+                this.downloads = [];
                 this.status = e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)
                     ? 'active (no recent items yet)' : `unavailable: ${e.message}`;
                 this._emit();
@@ -126,10 +145,11 @@ export class RecentFilesSource {
             }
             try {
                 const t0 = GLib.get_monotonic_time();
-                const {files, folders} = parseRecent(bytes, {excludeScreenshots: this.excludeScreenshots});
+                const {files, folders, downloads} = parseRecent(bytes, {excludeScreenshots: this.excludeScreenshots});
                 this.lastParseMs = (GLib.get_monotonic_time() - t0) / 1000;
                 this.files = files;
                 this.folders = folders;
+                this.downloads = downloads;
                 this.status = 'active';
             } catch (e) {
                 // A half-written or corrupted file: keep the previous results.

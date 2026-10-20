@@ -51,7 +51,7 @@ globalThis.rdMenu = () => {
     const icon = rdFind();
     if (!icon) return null;
     icon.popupMenu();
-    const items = icon._menu._getMenuItems().map(i =>
+    const items = icon._menu._getMenuItems().filter(i => i.visible).map(i =>
         i.label ? (i.constructor.name.includes('Separator') ? '# ' : '') + i.label.text
             : (i.constructor.name.includes('Separator') ? '---' : '?'));
     icon._menu.close(0);
@@ -77,8 +77,8 @@ GLib.file_set_contents(`${DL}/photo.png`, '');
 GLib.file_set_contents(`${DL}/photo.png.part`, 'img');
 sleep(300);
 GLib.rename(`${DL}/photo.png.part`, `${DL}/photo.png`);
-for (const n of ['Extracted', 'Album'])
-    GLib.mkdir_with_parents(`${DL}/${n}`, 0o755);
+GLib.mkdir_with_parents(`${HOME}/Pictures`, 0o755);
+GLib.file_set_contents(`${HOME}/Pictures/web.png`, 'x');
 for (let i = 1; i <= 6; i++)
     GLib.file_set_contents(`${HOME}/Documents/doc${i}.txt`, 'x');
 
@@ -94,6 +94,11 @@ const furi = Gio.File.new_for_path(`${HOME}/Documents`).get_uri();
 bf.set_mime_type(furi, 'inode/directory');
 bf.add_application(furi, 'code', 'code %u');
 bf.set_visited_date_time(furi, now);
+// A browser download saved outside Downloads.
+const wuri = Gio.File.new_for_path(`${HOME}/Pictures/web.png`).get_uri();
+bf.set_mime_type(wuri, 'image/png');
+bf.add_application(wuri, 'com.google.Chrome', 'gio open %u');
+bf.set_added_date_time(wuri, now.add_seconds(-200));
 bf.add_application(Gio.File.new_for_path(`${HOME}/Documents/missing.txt`).get_uri(), 'x', 'x %u');
 bf.to_file(`${HOME}/.local/share/recently-used.xbel`);
 sleep(3000); // recent-files debounce + monitor delivery
@@ -104,14 +109,15 @@ print(`     menu: ${JSON.stringify(m)}`);
 check('Settings is the first item', m?.[0] === 'RecentDock Settings');
 const headings = items => items.filter(x => x.startsWith('# ') && x.length > 2).map(x => x.slice(2));
 check('default section order', JSON.stringify(headings(m)) === JSON.stringify([
-    'Recently Downloaded Folders', 'Recently Downloaded Files', 'Recently Opened Files', 'Recently Opened Folders']),
+    'Recent Download Locations', 'Recent Downloads', 'Recent Files', 'Recent Folders']),
 JSON.stringify(headings(m)));
-check('downloaded files distinguished from folders',
-    m.includes('report.pdf') && m.includes('photo.png') && m.includes('Album') && m.includes('Extracted'));
+check('download locations are where downloads were saved',
+    m.includes('report.pdf') && m.includes('web.png') && m.includes('Downloads') && m.includes('Pictures'));
+check('heading explanations hidden until asked for', !m.some(x => x.startsWith('Folders your downloads')));
 check('incomplete download never listed', !m.some(x => x.includes('.crdownload') || x.includes('.part')));
 check('opened files limited to 3, newest first',
-    JSON.stringify(m.slice(m.indexOf('# Recently Opened Files') + 1, m.indexOf('# Recently Opened Files') + 4)) ===
-    JSON.stringify(['doc6.txt', 'doc5.txt', 'doc4.txt']));
+    JSON.stringify(m.slice(m.indexOf('# Recent Files') + 1, m.indexOf('# Recent Files') + 4)) ===
+    JSON.stringify(['web.png', 'doc6.txt', 'doc5.txt']));
 check('missing recent file not shown', !m.includes('missing.txt'));
 check('dock items kept below RecentDock items', m.includes('Unpin') || m.includes('App Details') || m.includes('Pin to Dash'));
 
@@ -123,29 +129,30 @@ settings.set_string('opened-files-sort', 'oldest');
 sleep(500);
 m = evalShell('rdMenu()');
 check('reordered sections, Settings still first', m[0] === 'RecentDock Settings' &&
-    JSON.stringify(headings(m)) === JSON.stringify(['Recently Opened Files', 'Recently Opened Folders', 'Recently Downloaded Files']),
+    JSON.stringify(headings(m)) === JSON.stringify(['Recent Files', 'Recent Folders', 'Recent Downloads']),
 JSON.stringify(headings(m)));
-const of = m.indexOf('# Recently Opened Files');
+const of = m.indexOf('# Recent Files');
 check('limit 5 + oldest-first for one section only',
-    JSON.stringify(m.slice(of + 1, of + 6)) === JSON.stringify(['doc2.txt', 'doc3.txt', 'doc4.txt', 'doc5.txt', 'doc6.txt']));
-check('disabled section hidden completely', !m.includes('Album') && !headings(m).includes('Recently Downloaded Folders'));
+    JSON.stringify(m.slice(of + 1, of + 6)) === JSON.stringify(['doc3.txt', 'doc4.txt', 'doc5.txt', 'doc6.txt', 'web.png']));
+check('disabled section hidden completely', !m.includes('Pictures') && !headings(m).includes('Recent Download Locations'));
 settings.set_boolean('downloaded-folders-enabled', true);
 sleep(300);
 m = evalShell('rdMenu()');
-check('re-enabled section restores history', m.includes('Album'));
+check('re-enabled section restores history', m.includes('Pictures'));
 
 // --- Clearing --------------------------------------------------------------
 settings.set_int64('downloaded-files-cleared-at', Date.now());
 sleep(300);
 m = evalShell('rdMenu()');
-check('clearing one section leaves the others', !m.includes('report.pdf') && m.includes('Album') && m.includes('doc6.txt'));
+check('clearing one section leaves the others', !m.includes('report.pdf') && m.includes('Pictures') && m.includes('doc6.txt'));
 check('clearing does not delete files', GLib.file_test(`${DL}/report.pdf`, GLib.FileTest.EXISTS));
 
 // --- Deleted paths ----------------------------------------------------------
-GLib.rmdir(`${DL}/Album`);
+GLib.unlink(`${HOME}/Pictures/web.png`);
+GLib.rmdir(`${HOME}/Pictures`);
 sleep(300);
 m = evalShell('rdMenu()');
-check('deleted folder disappears without errors', !m.includes('Album') && m[0] === 'RecentDock Settings');
+check('deleted folder disappears without errors', !m.includes('Pictures') && m[0] === 'RecentDock Settings');
 
 // --- Left click --------------------------------------------------------------
 settings.set_string('left-click-action', 'downloaded-folder');
