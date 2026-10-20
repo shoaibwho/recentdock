@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<schemalist gettext-domain="recentdock">
+  <enum id="org.gnome.shell.extensions.recentdock.LeftClick">
+    <value nick="download-directory" value="0"/>
+    <value nick="downloaded-folder" value="1"/>
+    <value nick="visited-folder" value="2"/>
+    <value nick="opened-file" value="3"/>
+    <value nick="url" value="4"/>
+    <value nick="application" value="5"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.recentdock.Sort">
+    <value nick="newest" value="0"/>
+    <value nick="oldest" value="1"/>
+  </enum>
+  <schema id="org.gnome.shell.extensions.recentdock" path="/org/gnome/shell/extensions/recentdock/">
+    <key name="schema-version" type="i">
+      <default>1</default>
+      <summary>Configuration format version (used for migrations)</summary>
+    </key>
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enable RecentDock</summary>
+    </key>
+    <key name="left-click-action" enum="org.gnome.shell.extensions.recentdock.LeftClick">
+      <default>'download-directory'</default>
+      <summary>What a left-click on the RecentDock icon does</summary>
+    </key>
+    <key name="left-click-url" type="s">
+      <default>''</default>
+      <summary>Web address opened by the "url" left-click action (http/https only)</summary>
+    </key>
+    <key name="left-click-app" type="s">
+      <default>''</default>
+      <summary>Desktop file ID launched by the "application" left-click action</summary>
+    </key>
+    <key name="section-order" type="as">
+      <default>['downloaded-folders', 'downloaded-files', 'opened-files', 'opened-folders']</default>
+      <summary>Order of the sections in the right-click menu</summary>
+    </key>
+    <key name="exclude-screenshots" type="b">
+      <default>true</default>
+      <summary>Do not list screenshots saved by GNOME Shell as opened files</summary>
+    </key>
+    <key name="refresh-request" type="x">
+      <default>0</default>
+      <summary>Written by Settings to ask the extension to refresh history</summary>
+    </key>
+    <key name="downloaded-folders-enabled" type="b">
+      <default>true</default>
+      <summary>Downloaded folders: show in the menu</summary>
+      <description>Hiding a section keeps its history.</description>
+    </key>
+    <key name="downloaded-folders-limit" type="i">
+      <range min="3" max="5"/>
+      <default>3</default>
+      <summary>Downloaded folders: number of entries shown (3 or 5)</summary>
+    </key>
+    <key name="downloaded-folders-sort" enum="org.gnome.shell.extensions.recentdock.Sort">
+      <default>'newest'</default>
+      <summary>Downloaded folders: order of entries within the section</summary>
+    </key>
+    <key name="downloaded-folders-cleared-at" type="x">
+      <default>0</default>
+      <summary>Downloaded folders: history recorded before this time (ms since epoch) is hidden and forgotten</summary>
+    </key>
+    <key name="downloaded-files-enabled" type="b">
+      <default>true</default>
+      <summary>Downloaded files: show in the menu</summary>
+      <description>Hiding a section keeps its history.</description>
+    </key>
+    <key name="downloaded-files-limit" type="i">
+      <range min="3" max="5"/>
+      <default>3</default>
+      <summary>Downloaded files: number of entries shown (3 or 5)</summary>
+    </key>
+    <key name="downloaded-files-sort" enum="org.gnome.shell.extensions.recentdock.Sort">
+      <default>'newest'</default>
+      <summary>Downloaded files: order of entries within the section</summary>
+    </key>
+    <key name="downloaded-files-cleared-at" type="x">
+      <default>0</default>
+      <summary>Downloaded files: history recorded before this time (ms since epoch) is hidden and forgotten</summary>
+    </key>
+    <key name="opened-files-enabled" type="b">
+      <default>true</default>
+      <summary>Opened files: show in the menu</summary>
+      <description>Hiding a section keeps its history.</description>
+    </key>
+    <key name="opened-files-limit" type="i">
+      <range min="3" max="5"/>
+      <default>3</default>
+      <summary>Opened files: number of entries shown (3 or 5)</summary>
+    </key>
+    <key name="opened-files-sort" enum="org.gnome.shell.extensions.recentdock.Sort">
+      <default>'newest'</default>
+      <summary>Opened files: order of entries within the section</summary>
+    </key>
+    <key name="opened-files-cleared-at" type="x">
+      <default>0</default>
+      <summary>Opened files: history recorded before this time (ms since epoch) is hidden and forgotten</summary>
+    </key>
+    <key name="opened-folders-enabled" type="b">
+      <default>true</default>
+      <summary>Opened folders: show in the menu</summary>
+      <description>Hiding a section keeps its history.</description>
+    </key>
+    <key name="opened-folders-limit" type="i">
+      <range min="3" max="5"/>
+      <default>3</default>
+      <summary>Opened folders: number of entries shown (3 or 5)</summary>
+    </key>
+    <key name="opened-folders-sort" enum="org.gnome.shell.extensions.recentdock.Sort">
+      <default>'newest'</default>
+      <summary>Opened folders: order of entries within the section</summary>
+    </key>
+    <key name="opened-folders-cleared-at" type="x">
+      <default>0</default>
+      <summary>Opened folders: history recorded before this time (ms since epoch) is hidden and forgotten</summary>
+    </key>
+  </schema>
+</schemalist>

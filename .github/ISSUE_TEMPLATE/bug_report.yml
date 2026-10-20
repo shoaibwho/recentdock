@@ -1,0 +1,21 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please do not include private file names or paths. The diagnostic report from Settings → Diagnostics → Copy Report contains none.
+  - type: textarea
+    id: what
+    attributes: {label: What happened, description: "What did you do, what did you expect, what happened instead?"}
+    validations: {required: true}
+  - type: textarea
+    id: diagnostics
+    attributes: {label: Diagnostic report, description: "Paste from Settings → Diagnostics → Copy Report", render: text}
+  - type: input
+    id: env
+    attributes: {label: Distribution and GNOME version, placeholder: "Ubuntu 24.04, GNOME Shell 46, Wayland"}
+    validations: {required: true}
+  - type: textarea
+    id: logs
+    attributes: {label: Relevant log lines, description: "journalctl --user -b | grep -i recentdock", render: text}

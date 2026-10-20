@@ -1,0 +1,10 @@
+# Build output
+/build/
+*.zip
+src/schemas/gschemas.compiled
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+node_modules/

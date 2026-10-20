@@ -1,0 +1,13 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Launcher for the RecentDock dock icon.
+#
+# While the RecentDock extension is enabled, clicks on the dock icon are handled
+# inside GNOME Shell and this script is not run at all. It runs only when the
+# icon is started some other way (app grid with the extension disabled, a
+# terminal, another dock). It then asks the extension over D-Bus, and if the
+# extension is not running, falls back to a standalone helper.
+gdbus call --session --dest org.gnome.Shell \
+    --object-path /io/github/legitforce/RecentDock \
+    --method io.github.legitforce.RecentDock.Activate >/dev/null 2>&1 && exit 0
+exec gjs -m "@EXTDIR@/launcher.js"

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d8fd9"/>
+      <stop offset="1" stop-color="#1c5fa8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#bg)"/>
+  <rect x="28" y="34" width="72" height="12" rx="6" fill="#ffffff" opacity="0.95"/>
+  <rect x="28" y="58" width="56" height="12" rx="6" fill="#ffffff" opacity="0.8"/>
+  <rect x="28" y="82" width="40" height="12" rx="6" fill="#ffffff" opacity="0.65"/>
+  <circle cx="92" cy="88" r="18" fill="#ffb02e"/>
+  <path d="M92 78v12l7 5" stroke="#5a3a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

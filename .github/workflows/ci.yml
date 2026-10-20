@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gjs libglib2.0-bin desktop-file-utils shellcheck
+      - name: Validate schema
+        run: glib-compile-schemas --strict --dry-run src/schemas
+      - name: Validate desktop entry
+        run: sed 's|@LAUNCHER@|/usr/bin/true|' data/recentdock.desktop.in > /tmp/recentdock.desktop && desktop-file-validate /tmp/recentdock.desktop
+      - name: Shellcheck
+        run: shellcheck -S warning install.sh uninstall.sh tests/run.sh tools/*.sh data/recentdock-launch
+      - name: Unit and integration tests
+        run: tests/run.sh
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 20}
+      - run: npx -y eslint@9.13.0 src tests tools

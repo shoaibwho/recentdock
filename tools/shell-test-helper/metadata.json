@@ -1,0 +1,1 @@
+{"uuid": "recentdock-test-helper@localhost", "name": "RecentDock test helper (testing only)", "description": "Enables org.gnome.Shell.Eval inside a throwaway nested test session.", "shell-version": ["45", "46", "47"]}

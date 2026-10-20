@@ -1,0 +1,9 @@
+{
+  "uuid": "recentdock@legitforce.github.io",
+  "name": "RecentDock",
+  "description": "A dock icon for recent downloads, files and folders. Left-click runs a configurable action; right-click lists recently downloaded folders and files and recently opened files and folders. All history stays on this computer.",
+  "shell-version": ["45", "46", "47"],
+  "settings-schema": "org.gnome.shell.extensions.recentdock",
+  "url": "https://github.com/shoaibwho/recentdock",
+  "version-name": "0.1.0"
+}

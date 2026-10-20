@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=RecentDock
+GenericName=Recent Items
+Comment=Recent downloads, files and folders. Right-click for the list.
+Exec="@LAUNCHER@"
+Icon=recentdock
+Terminal=false
+StartupNotify=false
+Categories=Utility;GTK;
+Keywords=recent;downloads;files;folders;history;
+X-GNOME-UsesNotifications=true
